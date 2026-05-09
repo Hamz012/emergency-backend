@@ -6,7 +6,7 @@ $host = getenv("DB_HOST");
 $username = getenv("DB_USER");
 $password = getenv("DB_PASS");
 $database = getenv("DB_NAME");
-$port = getenv("DB_PORT") ?: 3307;
+$port = getenv("DB_PORT") ?: 3306;
 
 // validasi env
 if (!$host || !$username || !$database) {
