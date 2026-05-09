@@ -17,8 +17,7 @@ $longitude = $data['longitude'] ?? '';
 if (!$user_id || !$kategori || !$deskripsi) {
     echo json_encode([
         "success" => false,
-        "message" => "Data tidak lengkap",
-        "debug" => $data
+        "message" => "Data tidak lengkap"
     ]);
     exit;
 }
