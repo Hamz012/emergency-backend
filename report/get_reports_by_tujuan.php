@@ -6,6 +6,22 @@ include __DIR__ . '/../config/database.php';
 
 $tujuan = $_GET['tujuan'] ?? 'polisi';
 
+/*
+MAP TUJUAN → KATEGORI
+*/
+$kategori = "";
+
+if ($tujuan == "polisi") {
+    $kategori = "kriminal";
+} elseif ($tujuan == "ambulance") {
+    $kategori = "kecelakaan";
+} elseif ($tujuan == "pemadam") {
+    $kategori = "kebakaran";
+}
+
+/*
+QUERY FIXED
+*/
 $sql = "
 SELECT 
 r.id,
@@ -15,25 +31,23 @@ r.alamat,
 r.latitude,
 r.longitude,
 r.created_at,
-COALESCE(r.operator_confirm, 'diproses') as operator_confirm,
+r.operator_confirm,
 u.nama,
 u.no_hp
 FROM reports r
 JOIN users u ON r.user_id = u.id
-WHERE r.tujuan = ?
+WHERE r.kategori = '$kategori'
 ORDER BY r.created_at DESC
 ";
 
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $tujuan);
-$stmt->execute();
-
-$result = $stmt->get_result();
+$result = mysqli_query($conn, $sql);
 
 $data = [];
 
-while ($row = $result->fetch_assoc()) {
-    $data[] = $row;
+if ($result) {
+    while ($row = mysqli_fetch_assoc($result)) {
+        $data[] = $row;
+    }
 }
 
 echo json_encode($data);
