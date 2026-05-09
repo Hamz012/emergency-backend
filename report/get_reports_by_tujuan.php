@@ -7,47 +7,58 @@ include __DIR__ . '/../config/database.php';
 $tujuan = $_GET['tujuan'] ?? 'polisi';
 
 /*
-MAP TUJUAN → KATEGORI
+========================================
+MAP TUJUAN -> KATEGORI DATABASE
+========================================
 */
-$kategori = "";
+$map = [
+    "polisi" => "kriminal",
+    "ambulance" => "kecelakaan",
+    "pemadam" => "kebakaran"
+];
 
-if ($tujuan == "polisi") {
-    $kategori = "kriminal";
-} elseif ($tujuan == "ambulance") {
-    $kategori = "kecelakaan";
-} elseif ($tujuan == "pemadam") {
-    $kategori = "kebakaran";
+$kategori = $map[$tujuan] ?? null;
+
+/*
+JIKA KATEGORI TIDAK VALID
+*/
+if (!$kategori) {
+    echo json_encode([]);
+    exit;
 }
 
 /*
-QUERY FIXED
+========================================
+QUERY AMAN (FIX SQL ERROR)
+========================================
 */
 $sql = "
 SELECT 
-r.id,
-r.kategori,
-r.deskripsi,
-r.alamat,
-r.latitude,
-r.longitude,
-r.created_at,
-r.operator_confirm,
-u.nama,
-u.no_hp
+    r.id,
+    r.kategori,
+    r.deskripsi,
+    r.alamat,
+    r.latitude,
+    r.longitude,
+    r.created_at,
+    u.nama,
+    u.no_hp
 FROM reports r
 JOIN users u ON r.user_id = u.id
-WHERE r.kategori = '$kategori'
+WHERE r.kategori = ?
 ORDER BY r.created_at DESC
 ";
 
-$result = mysqli_query($conn, $sql);
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, "s", $kategori);
+mysqli_stmt_execute($stmt);
+
+$result = mysqli_stmt_get_result($stmt);
 
 $data = [];
 
-if ($result) {
-    while ($row = mysqli_fetch_assoc($result)) {
-        $data[] = $row;
-    }
+while ($row = mysqli_fetch_assoc($result)) {
+    $data[] = $row;
 }
 
 echo json_encode($data);
