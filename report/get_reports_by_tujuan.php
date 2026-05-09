@@ -12,24 +12,28 @@ MAP TUJUAN -> KATEGORI DATABASE
 ========================================
 */
 $map = [
-    "polisi" => "kriminal",
-    "ambulance" => "kecelakaan",
-    "pemadam" => "kebakaran"
+    "polisi" => ["kriminal"],
+    "ambulance" => ["kecelakaan", "ambulance", "kecelakaan lalu lintas"],
+    "pemadam" => ["kebakaran"]
 ];
 
-$kategori = $map[$tujuan] ?? null;
+$kategoriList = $map[$tujuan] ?? [];
 
-/*
-JIKA KATEGORI TIDAK VALID
-*/
-if (!$kategori) {
+if (count($kategoriList) == 0) {
     echo json_encode([]);
     exit;
 }
 
 /*
 ========================================
-QUERY AMAN (FIX SQL ERROR)
+BUAT PLACEHOLDER IN (?, ?, ?)
+========================================
+*/
+$placeholders = implode(',', array_fill(0, count($kategoriList), '?'));
+
+/*
+========================================
+QUERY FIXED
 ========================================
 */
 $sql = "
@@ -45,14 +49,21 @@ SELECT
     u.no_hp
 FROM reports r
 JOIN users u ON r.user_id = u.id
-WHERE r.kategori = ?
+WHERE r.kategori IN ($placeholders)
 ORDER BY r.created_at DESC
 ";
 
 $stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, "s", $kategori);
-mysqli_stmt_execute($stmt);
 
+/*
+========================================
+BIND DINAMIS
+========================================
+*/
+$types = str_repeat("s", count($kategoriList));
+mysqli_stmt_bind_param($stmt, $types, ...$kategoriList);
+
+mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 
 $data = [];
