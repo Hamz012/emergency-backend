@@ -1,42 +1,58 @@
 <?php
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
-header("Access-Control-Allow-Methods: POST");
 
 include __DIR__ . '/../config/database.php';
 
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit(0);
+}
+
 $data = json_decode(file_get_contents("php://input"), true);
 
-$no_hp = $data["no_hp"] ?? "";
+$no_hp = trim($data['no_hp'] ?? '');
 
 if (!$no_hp) {
     echo json_encode([
         "success" => false,
-        "message" => "Nomor HP wajib diisi"
+        "message" => "Nomor HP kosong"
     ]);
     exit;
 }
 
-$sql = "SELECT * FROM users WHERE no_hp='$no_hp' LIMIT 1";
-$result = mysqli_query($conn, $sql);
+$no_hp = mysqli_real_escape_string($conn, $no_hp);
 
-if (!$result) {
+$sql = "SELECT id, nama, no_hp, role FROM users WHERE no_hp='$no_hp' LIMIT 1";
+$query = mysqli_query($conn, $sql);
+
+if (!$query) {
     echo json_encode([
         "success" => false,
-        "message" => mysqli_error($conn)
+        "message" => "SQL ERROR",
+        "error" => mysqli_error($conn)
     ]);
     exit;
 }
 
-if (mysqli_num_rows($result) > 0) {
-    $user = mysqli_fetch_assoc($result);
+$user = mysqli_fetch_assoc($query);
+
+if ($user) {
 
     echo json_encode([
         "success" => true,
-        "user" => $user
+        "message" => "Login berhasil",
+        "user" => [
+            "id" => $user['id'],
+            "nama" => $user['nama'],
+            "no_hp" => $user['no_hp'],
+            "role" => $user['role']
+        ]
     ]);
+
 } else {
+
     echo json_encode([
         "success" => false,
         "message" => "User tidak ditemukan"
