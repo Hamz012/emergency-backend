@@ -2,17 +2,12 @@
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
 
 include __DIR__ . '/../config/database.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0);
-}
-
 $data = json_decode(file_get_contents("php://input"), true) ?? [];
 
-$user_id = $data['user_id'] ?? null;
+$user_id = intval($data['user_id'] ?? 0);
 $kategori = $data['kategori'] ?? '';
 $deskripsi = $data['deskripsi'] ?? '';
 $alamat = $data['alamat'] ?? '';
@@ -28,19 +23,9 @@ if (!$user_id || !$kategori || !$deskripsi) {
     exit;
 }
 
-$user_id = intval($user_id);
-$kategori = mysqli_real_escape_string($conn, $kategori);
-$deskripsi = mysqli_real_escape_string($conn, $deskripsi);
-$alamat = mysqli_real_escape_string($conn, $alamat);
-$latitude = mysqli_real_escape_string($conn, $latitude);
-$longitude = mysqli_real_escape_string($conn, $longitude);
-
-/* INSERT */
 $query = mysqli_query($conn,
-    "INSERT INTO reports 
-    (user_id, kategori, deskripsi, alamat, latitude, longitude)
-    VALUES 
-    ('$user_id', '$kategori', '$deskripsi', '$alamat', '$latitude', '$longitude')"
+    "INSERT INTO reports (user_id, kategori, deskripsi, alamat, latitude, longitude)
+     VALUES ('$user_id', '$kategori', '$deskripsi', '$alamat', '$latitude', '$longitude')"
 );
 
 if ($query) {
@@ -51,7 +36,7 @@ if ($query) {
 } else {
     echo json_encode([
         "success" => false,
-        "message" => "Gagal insert",
+        "message" => "Insert gagal",
         "error" => mysqli_error($conn)
     ]);
 }
