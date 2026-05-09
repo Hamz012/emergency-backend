@@ -1,30 +1,20 @@
 <?php
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: Content-Type");
 
 include __DIR__ . '/../config/database.php';
 
-$data = json_decode(file_get_contents("php://input"), true);
+$data = json_decode(file_get_contents("php://input"), true) ?? [];
 
-$user_id = $data['user_id'] ?? null;
+$user_id = intval($data['user_id'] ?? 0);
 $kategori = $data['kategori'] ?? '';
 $deskripsi = $data['deskripsi'] ?? '';
 $alamat = $data['alamat'] ?? '';
 $latitude = $data['latitude'] ?? '';
 $longitude = $data['longitude'] ?? '';
 
-// mapping penting ini
-$tujuan = "";
-
-if ($kategori == "kecelakaan") {
-    $tujuan = "ambulance";
-} elseif ($kategori == "kebakaran") {
-    $tujuan = "pemadam";
-} elseif ($kategori == "kriminal") {
-    $tujuan = "polisi";
-}
-
-if (!$user_id || !$kategori) {
+if (!$user_id || !$kategori || !$deskripsi) {
     echo json_encode([
         "success" => false,
         "message" => "Data tidak lengkap"
@@ -32,12 +22,10 @@ if (!$user_id || !$kategori) {
     exit;
 }
 
-$sql = "INSERT INTO reports 
-(user_id, kategori, deskripsi, alamat, latitude, longitude, tujuan)
-VALUES 
-('$user_id', '$kategori', '$deskripsi', '$alamat', '$latitude', '$longitude', '$tujuan')";
-
-$query = mysqli_query($conn, $sql);
+$query = mysqli_query($conn,
+    "INSERT INTO reports (user_id, kategori, deskripsi, alamat, latitude, longitude)
+     VALUES ('$user_id', '$kategori', '$deskripsi', '$alamat', '$latitude', '$longitude')"
+);
 
 if ($query) {
     echo json_encode([
@@ -47,7 +35,8 @@ if ($query) {
 } else {
     echo json_encode([
         "success" => false,
-        "message" => mysqli_error($conn)
+        "message" => "Insert gagal",
+        "error" => mysqli_error($conn)
     ]);
 }
 ?>
